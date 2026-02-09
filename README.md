@@ -5,9 +5,9 @@ Maritime anomaly detection pipeline using LLM-based scoring and synthetic anomal
 ## Features
 
 - **Preprocess**: Route slicing, stratification, and prompt generation
-- **Score**: LLM-based anomaly suitability scoring (Qwen/Qwen3-8B)
-- **Inject**: Synthetic anomaly injection (A1: position, A2: velocity, A3: close approach)
-- **Prepare Dataset**: NPZ dataset generation for model training
+- **Score**: LLM-based anomaly plausibility scoring (Qwen/Qwen3-8B)
+- **Inject**: Synthetic anomaly injection (A1: Unexpected AIS Activity, A2: Route Deviation, A3: Close Approach)
+- **Prepare Dataset**: .zpz dataset generation for model training
 - **Pipeline**: End-to-end execution with customizable parameters
 
 ## Installation
