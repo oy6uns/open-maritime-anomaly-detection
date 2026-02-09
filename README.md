@@ -79,12 +79,12 @@ open-maritime-anomaly-detection/
 ├── config.yaml              # Configuration file
 ├── requirements.txt         # Python dependencies
 ├── setup.py                 # Package setup
-├── README.md               # This file
-└── omad/                   # Main package
+├── README.md               
+└── omad/                   
     ├── cli.py              # CLI entry point
-    ├── config.py           # Configuration management
-    ├── config_loader.py    # YAML config loader
-    ├── paths.py            # Path resolution
+    ├── config.py           
+    ├── config_loader.py    
+    ├── paths.py            
     ├── preprocess/         # Stage 1: Preprocessing
     │   ├── __init__.py
     │   ├── loader.py
@@ -130,10 +130,6 @@ Each NPZ file contains:
 - `X_seq`: Sequential features (n_samples, T, n_features)
 - `y`: Binary anomaly labels (n_samples, T)
 - `route_ids`: Route identifiers (n_samples,)
-
-## License
-
-[Your License Here]
 
 <!--
 ## Citation
