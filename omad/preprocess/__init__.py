@@ -89,17 +89,21 @@ def run_preprocess(
                 "./omtad.csv",
                 paths["output_dir"] / "omtad.csv",
             ]
-            input_csv = None
             for p in possible_paths:
                 if Path(p).exists():
                     input_csv = str(p)
                     break
 
+            # If omtad.csv not found, generate it from raw AIS data
             if input_csv is None:
-                log_error("Input CSV not found. Please specify --input-csv or ensure omtad.csv exists.")
-                raise FileNotFoundError(
-                    "Input CSV not found. Run data loading first or specify --input-csv explicitly."
-                )
+                log_info("  omtad.csv not found. Loading raw AIS data from ./data/ ...")
+                from omad.preprocess.loader import prepare_data_pipeline
+                df_loaded = prepare_data_pipeline()
+                output_csv_path = Path("./data/omtad.csv")
+                output_csv_path.parent.mkdir(parents=True, exist_ok=True)
+                df_loaded.to_csv(output_csv_path, index=False, encoding="utf-8-sig")
+                console.print(f"  ✓ Generated: {output_csv_path} ({len(df_loaded):,} rows)")
+                input_csv = str(output_csv_path)
 
         console.print(f"  Reading: {input_csv}")
         df = pd.read_csv(input_csv)

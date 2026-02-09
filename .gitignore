@@ -67,7 +67,8 @@ venv.bak/
 # macOS
 .DS_Store
 
-# Data files (optional - comment out if you want to track them)
-# *.csv
-# *.npz
-# *.json
+# Data files
+data/
+route_sliced_*/
+*.csv
+*.npz
