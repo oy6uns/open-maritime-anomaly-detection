@@ -23,7 +23,7 @@ Maritime anomaly detection pipeline using LLM-based scoring and synthetic anomal
 
 ```bash
 # Clone repository
-git clone <repository-url>
+git clone https://github.com/oy6uns/open-maritime-anomaly-detection.git
 cd open-maritime-anomaly-detection
 
 # Create virtual environment (recommended)
@@ -40,8 +40,8 @@ pip install -e .
 
 ```bash
 mkdir -p data
-# Copy your AIS data (e.g., OMTAD: https://github.com/EdithCowan/OMTAD/tree/main/West%20Grid) to data/
-cp -r /path/to/West\ Grid/ data/
+# Copy your AIS data (e.g., OMTAD West Grid: https://github.com/EdithCowan/OMTAD/tree/main/West%20Grid) to data/
+cp -r /path/to/West\ Grid/* data/
 ```
 
 ### 2. Initialize Configuration
