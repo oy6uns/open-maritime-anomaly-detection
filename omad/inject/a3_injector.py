@@ -16,7 +16,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from inject_utils import A3Plan, load_a3_plans, minmax_normalize_scores
+from omad.inject.inject_utils import A3Plan, load_a3_plans, minmax_normalize_scores
 
 # =========================
 # Constants
@@ -299,7 +299,7 @@ def _generate_virtual_trajectory(
 # =========================
 def inject_a3_virtual_rows(
     rows: List[dict],
-    route_id: int,
+    route_id: str,
     scores: List[float],
     seed: int = 42,
 ) -> List[dict]:
@@ -334,10 +334,10 @@ def inject_a3_virtual_rows(
     except Exception:
         return []
 
-    # Assign negative route ID and update metadata
-    virtual_route_id = -abs(route_id)
+    # Assign virtual route ID with "A3_" prefix
+    virtual_route_id = f"A3_{route_id}"
     for i, row in enumerate(virtual_rows):
-        row['ROUTE_ID'] = str(virtual_route_id)
+        row['ROUTE_ID'] = virtual_route_id
         row['ROUTE_POINT_IDX'] = str(i)
         row['ANOMALY_TYPE'] = 'A3' if row.get('ANOMALY') == 'True' else ''
 

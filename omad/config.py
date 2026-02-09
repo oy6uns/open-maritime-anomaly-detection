@@ -13,7 +13,7 @@ class PathConfig(BaseModel):
 
     def route_sliced_dir(self, T: int) -> Path:
         """Get route_sliced_{T} directory path."""
-        return self.project_root / f"route_sliced_{T}"
+        return self.data_dir / f"route_sliced_{T}"
 
     def preprocessed_csv(self, T: int) -> Path:
         """Get preprocessed CSV path for given T."""

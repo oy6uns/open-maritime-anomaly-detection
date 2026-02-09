@@ -1,6 +1,5 @@
 """Score: LLM Anomaly Scoring"""
 
-from omad.score.main import _batch_from_root, _batch_from_dir, _run_once, _run_interactive
 
 def run_score(
     T: int | None = None,
@@ -17,7 +16,7 @@ def run_score(
 ):
     """
     Score: Generate LLM anomaly suitability scores.
-    
+
     Args:
         T: Time slice (12/24) - auto-derives paths
         batch_root: Batch root with user_query/ subdirs
@@ -31,22 +30,24 @@ def run_score(
         stdin_mode: Single query from stdin
         verbose: Detailed logging
     """
+    from datetime import datetime
+    from pathlib import Path
     from omad.config import get_config
     from omad.paths import resolve_stage2_paths
-    from omad.utils.logging import console, log_stage_header, log_config, create_summary_table, log_success
+    from omad.utils.logging import console, log_stage_header, log_config, log_success
     import typer
-    
+
     log_stage_header(2, "LLM Anomaly Scoring")
-    
+
     config = get_config()
-    
+
     # Resolve paths
     if T is not None and not batch_root:
         paths = resolve_stage2_paths(T, config, output_dir=output_dir, log_dir=log_dir)
         batch_root = str(paths["batch_root"])
         output_dir = str(paths["output_dir"])
         log_dir = str(paths["log_dir"])
-    
+
     # Display configuration
     log_config({
         "Batch Root": batch_root or "N/A",
@@ -57,33 +58,62 @@ def run_score(
         "Output Dir": output_dir,
         "Log Dir": log_dir,
     })
-    
+
+    # Import score functions lazily (avoids loading model at import time)
+    from omad.score.main import _batch_from_root, _batch_from_dir, _run_once, _run_interactive
+
     # Execute based on mode
     try:
         if interactive:
-            _run_interactive(anomaly_type, max_new_tokens, max_retries)
+            _run_interactive(
+                anomaly_type=anomaly_type,
+                out_dir=output_dir or "outputs",
+                max_new_tokens=max_new_tokens,
+                max_retries=max_retries,
+            )
         elif stdin_mode:
-            _run_once(anomaly_type, max_new_tokens, max_retries)
+            _run_once(
+                anomaly_type=anomaly_type,
+                out_dir=output_dir or "outputs",
+                max_new_tokens=max_new_tokens,
+                max_retries=max_retries,
+            )
         elif batch_root:
-            stats = _batch_from_root(
-                batch_root, anomaly_type, max_new_tokens, max_retries,
-                output_dir, log_dir
-            )
-            summary = create_summary_table("Score Summary", stats)
-            console.print(summary)
+            # Create log file for batch processing
+            log_path = Path(log_dir or "logs")
+            log_path.mkdir(parents=True, exist_ok=True)
+            log_file = log_path / f"qwen_run_{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}.log"
+
+            with log_file.open("w", encoding="utf-8") as log_fh:
+                _batch_from_root(
+                    batch_root=batch_root,
+                    out_dir=output_dir,
+                    max_new_tokens=max_new_tokens,
+                    max_retries=max_retries,
+                    log_fh=log_fh,
+                )
+            console.print(f"  Log saved to: {log_file}")
         elif batch_dir:
-            stats = _batch_from_dir(
-                batch_dir, anomaly_type, max_new_tokens, max_retries,
-                output_dir, log_dir
-            )
-            summary = create_summary_table("Score Summary", stats)
-            console.print(summary)
+            log_path = Path(log_dir or "logs")
+            log_path.mkdir(parents=True, exist_ok=True)
+            log_file = log_path / f"qwen_run_{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}.log"
+
+            with log_file.open("w", encoding="utf-8") as log_fh:
+                _batch_from_dir(
+                    batch_dir=batch_dir,
+                    out_dir=output_dir,
+                    default_anomaly_type=anomaly_type,
+                    max_new_tokens=max_new_tokens,
+                    max_retries=max_retries,
+                    log_fh=log_fh,
+                )
+            console.print(f"  Log saved to: {log_file}")
         else:
             console.print("[red]Error:[/red] Must specify --T, --batch-root, or --batch-dir")
             raise typer.Exit(1)
-        
+
         log_success("Score completed successfully\n")
-        
+
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         if verbose:

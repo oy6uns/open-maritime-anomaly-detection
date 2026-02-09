@@ -111,11 +111,15 @@ def assign_stratum_labels(
             return "(-inf, inf)"
         return f"({interval.left:.3f}, {interval.right:.3f}]"
 
+    sog_str = sog_bins.apply(format_interval).astype(str)
+    dcog_str = dcog_bins.apply(format_interval).astype(str)
+    dsog_str = dsog_bins.apply(format_interval).astype(str)
+
     df["stratum"] = (
         df["vessel_type"] + "|" +
-        "sog=" + sog_bins.apply(format_interval) + "|" +
-        "dcog=" + dcog_bins.apply(format_interval) + "|" +
-        "dsog=" + dsog_bins.apply(format_interval)
+        "sog=" + sog_str + "|" +
+        "dcog=" + dcog_str + "|" +
+        "dsog=" + dsog_str
     )
 
     return df
@@ -158,13 +162,18 @@ def stratified_sample_percentages(
     return result
 
 
-def assign_k_values(df: pd.DataFrame, mode: str) -> pd.DataFrame:
+def assign_k_values(df: pd.DataFrame, mode: str, T: int, seed: int = 0) -> pd.DataFrame:
     """
     Assign K values for A1/A2 anomaly types.
 
+    K is drawn from {T*0.25, T*0.5, T*0.75} with equal (1/3) proportion
+    within each stratum.
+
     Args:
-        df: DataFrame with route data
+        df: DataFrame with route data (must have 'stratum' column)
         mode: Anomaly mode ('a1', 'a2', 'a3')
+        T: Time slice length (e.g., 12, 24)
+        seed: Random seed for shuffling
 
     Returns:
         DataFrame with 'K' column added (for A1/A2 only)
@@ -172,9 +181,16 @@ def assign_k_values(df: pd.DataFrame, mode: str) -> pd.DataFrame:
     result = df.copy()
 
     if mode.lower() in ["a1", "a2"]:
-        # Most routes get K=3, some get K=9 (stratified selection)
-        # For simplicity, assign K=3 to all (can be made more sophisticated)
-        result["K"] = 3
+        k_options = [int(T * 0.25), int(T * 0.5), int(T * 0.75)]
+        rng = np.random.default_rng(seed + 7)  # offset to avoid correlation with sampling seed
+
+        result["K"] = 0
+        for stratum_name, group in result.groupby("stratum"):
+            indices = group.index.tolist()
+            rng.shuffle(indices)
+            # Assign K values in round-robin: equal 1/3 proportion
+            for j, idx in enumerate(indices):
+                result.loc[idx, "K"] = k_options[j % len(k_options)]
     # A3 doesn't have K column
 
     return result
@@ -218,7 +234,7 @@ def generate_indices_csv(
 
     # Step 5: Assign K values (for A1/A2 only)
     if mode.lower() in ["a1", "a2"]:
-        stats_df = assign_k_values(stats_df, mode)
+        stats_df = assign_k_values(stats_df, mode, T=T, seed=seed)
 
     # Step 6: Add T column
     stats_df["T"] = T

@@ -17,13 +17,12 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from infer import infer_anomaly_type_from_filename, infer_expected_T_from_path
-from llm_core import generate_json_validated, load_model, set_hf_cache, validate_score_payload
-from logging_utils import get_arg_value, sanitize_user_query_text, save_output_json
+from omad.score.infer import infer_anomaly_type_from_filename, infer_expected_T_from_path
+from omad.score.llm_core import generate_json_validated, load_model, set_hf_cache, validate_score_payload
+from omad.score.logging_utils import get_arg_value, sanitize_user_query_text, save_output_json
 
-CACHE_DIR = "/nas/home/oy6uns"
+CACHE_DIR = "./data/models"
 MODEL_ID = "Qwen/Qwen3-8B"
-set_hf_cache(CACHE_DIR)
 
 def _parse_source_name_from_output_filename(name: str, prefix: str) -> Optional[str]:
     """Extract the original query basename from an output filename."""

@@ -20,7 +20,7 @@ from typing import List, Optional
 
 import numpy as np
 
-from inject_utils import (
+from omad.inject.inject_utils import (
     InjectionPlan,
     bearing,
     calculate_a_local,

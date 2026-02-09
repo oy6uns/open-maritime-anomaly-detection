@@ -50,16 +50,12 @@ def run_preprocess(
     config = get_config()
     paths = resolve_stage1_paths(T, config, output_dir=None)
 
-    # Window is always equal to T
-    window = T
-
     # Default ratios
     ratio_list = ratios if ratios is not None else [10, 5, 3, 1]
 
     # Display configuration
     log_config({
-        "T (Slice Length)": T,
-        "Window": window,
+        "Slice": T,
         "Input CSV": input_csv or "Auto-detect from omtad.csv",
         "Output Dir": paths["output_dir"],
         "Trim": trim,
@@ -82,8 +78,8 @@ def run_preprocess(
         # ==================================================================
         log_info("\n[bold]Step 1:[/bold] Route slicing")
 
+        # If input_csv is not set, try to find omtad.csv
         if input_csv is None:
-            # Try to find omtad.csv or similar
             possible_paths = [
                 "./data/omtad.csv",
                 "./omtad.csv",
@@ -94,16 +90,25 @@ def run_preprocess(
                     input_csv = str(p)
                     break
 
-            # If omtad.csv not found, generate it from raw AIS data
-            if input_csv is None:
-                log_info("  omtad.csv not found. Loading raw AIS data from ./data/ ...")
-                from omad.preprocess.loader import prepare_data_pipeline
-                df_loaded = prepare_data_pipeline()
-                output_csv_path = Path("./data/omtad.csv")
-                output_csv_path.parent.mkdir(parents=True, exist_ok=True)
-                df_loaded.to_csv(output_csv_path, index=False, encoding="utf-8-sig")
-                console.print(f"  ✓ Generated: {output_csv_path} ({len(df_loaded):,} rows)")
-                input_csv = str(output_csv_path)
+        # If input_csv is set but file doesn't exist, auto-generate from raw AIS data
+        if input_csv is not None and not Path(input_csv).exists():
+            log_info(f"  {input_csv} not found. Generating from raw AIS data...")
+            from omad.preprocess.loader import prepare_data_pipeline
+            df_loaded = prepare_data_pipeline()
+            output_csv_path = Path(input_csv)
+            output_csv_path.parent.mkdir(parents=True, exist_ok=True)
+            df_loaded.to_csv(output_csv_path, index=False, encoding="utf-8-sig")
+            console.print(f"  ✓ Generated: {output_csv_path} ({len(df_loaded):,} rows)")
+        elif input_csv is None:
+            # No path specified and no file found - try to generate at default location
+            log_info("  omtad.csv not found. Loading raw AIS data from ./data/ ...")
+            from omad.preprocess.loader import prepare_data_pipeline
+            df_loaded = prepare_data_pipeline()
+            output_csv_path = Path("./data/omtad.csv")
+            output_csv_path.parent.mkdir(parents=True, exist_ok=True)
+            df_loaded.to_csv(output_csv_path, index=False, encoding="utf-8-sig")
+            console.print(f"  ✓ Generated: {output_csv_path} ({len(df_loaded):,} rows)")
+            input_csv = str(output_csv_path)
 
         console.print(f"  Reading: {input_csv}")
         df = pd.read_csv(input_csv)
@@ -115,10 +120,10 @@ def run_preprocess(
         console.print(f"  Input rows: {len(df):,}")
 
         # Build routes
-        console.print(f"\n  Building routes (window={window}, trim={trim}, min_track_len={min_track_len})...")
+        console.print(f"\n  Building routes (T={T}, trim={trim}, min_track_len={min_track_len})...")
         routes_df = build_routes_long(
             df,
-            window=window,
+            window=T,
             trim=trim,
             min_track_len=min_track_len,
             drop_cols=["TYPE", "MONTH"],
@@ -128,7 +133,7 @@ def run_preprocess(
         console.print(f"  Routes: {routes_df['ROUTE_ID'].nunique():,}")
 
         # Validate
-        validate_routes_long(routes_df, window=window)
+        validate_routes_long(routes_df, window=T)
 
         # Save raw routes
         raw_routes_path = paths["raw_routes_csv"]

@@ -13,10 +13,19 @@ from pathlib import Path
 
 BASE_PATH = "./data"
 
+def _resolve_base_path():
+    """Auto-detect data directory (handles both ./data/{year}/ and ./data/West Grid/{year}/)."""
+    # Check if West Grid subdirectory exists
+    west_grid = os.path.join(BASE_PATH, "West Grid")
+    if os.path.isdir(west_grid):
+        return west_grid
+    return BASE_PATH
+
 def load_data(year_list):
     """
     Load all monthly CSV data (cargo, passenger, tanker) for specified years
     """
+    resolved_base = _resolve_base_path()
     columns = ["CRAFT_ID", "LON", "LAT", "COURSE", "SPEED", "TIMESTAMP", "Track_ID"]
     months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
     month_mapping = {
@@ -27,7 +36,7 @@ def load_data(year_list):
     }
     dfs = []
     for year in year_list:
-        base_path=f"{BASE_PATH}/{year}"    
+        base_path=f"{resolved_base}/{year}"
         types = ["cargo", "tanker"]
         
         for t in types:
@@ -42,7 +51,11 @@ def load_data(year_list):
                 else:
                     print(f"[WARN] File not found: {file_path}")
     if not dfs:
-        raise ValueError("Cannot load 2018 data.")
+        raise ValueError(
+            f"No AIS data files found in '{resolved_base}/'. "
+            f"Expected structure: {resolved_base}/{{year}}/{{cargo|tanker}}/{{month}}/MPF_*.csv\n"
+            f"Tip: Copy raw AIS data to ./data/ (e.g., cp -r /path/to/West\\ Grid ./data/)"
+        )
     df = pd.concat(dfs, ignore_index=True)
     df.dropna(inplace=True)
     

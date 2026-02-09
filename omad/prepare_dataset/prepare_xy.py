@@ -82,10 +82,10 @@ def load_anomaly_route_ids(indices_path: str, pct: str, mode: str) -> set:
     col = PCT_TO_COL[pct]
     df = pd.read_csv(indices_path)
     df[col] = df[col].astype(str).str.lower().eq("true")
-    route_ids = df.loc[df[col], "ROUTE_ID"].astype(int).tolist()
-    # A3 anomalies exist in both positive (original) and negative (generated) route IDs
+    route_ids = df.loc[df[col], "ROUTE_ID"].astype(str).tolist()
+    # A3 anomalies exist in both original and virtual (A3_ prefixed) route IDs
     if mode.lower() == "a3":
-        route_ids = route_ids + [-rid for rid in route_ids]
+        route_ids = route_ids + [f"A3_{rid}" for rid in route_ids]
     return set(route_ids)
 
 
@@ -94,14 +94,15 @@ def build_xy(csv_path: str, *, mode: str, T: int, anomaly_route_ids: set | None 
     if mode not in {"a1", "a2", "a3"}:
         raise ValueError("mode must be one of: a1, a2, a3")
 
-    df = pd.read_csv(csv_path)
-    df["ROUTE_ID"] = df["ROUTE_ID"].astype(int)
+    df = pd.read_csv(csv_path, dtype={"ROUTE_ID": str, "ANOMALY_TYPE": str}, low_memory=False)
+    df["ROUTE_ID"] = df["ROUTE_ID"].astype(str)
     df["T_INDEX"] = df["T_INDEX"].astype(int)
     df["ANOMALY"] = df["ANOMALY"].astype(str).str.lower().eq("true")
     df["ANOMALY_TYPE"] = df["ANOMALY_TYPE"].fillna("").astype(str).str.upper()
 
     if mode in {"a1", "a2"}:
-        df = df[df["ROUTE_ID"] > 0]
+        # Exclude A3 virtual vessel routes (prefixed with "A3_")
+        df = df[~df["ROUTE_ID"].str.startswith("A3_")]
 
     df = df.sort_values(["ROUTE_ID", "T_INDEX"], kind="mergesort")
     g = df.groupby("ROUTE_ID", sort=False)
@@ -114,7 +115,7 @@ def build_xy(csv_path: str, *, mode: str, T: int, anomaly_route_ids: set | None 
     good_ids = agg[(agg["size"] == T) & (agg["tn"] == T) & (agg["tmin"] == 0) & (agg["tmax"] == T - 1)].index
     df = df[df["ROUTE_ID"].isin(good_ids)]
 
-    route_ids = df["ROUTE_ID"].drop_duplicates().to_numpy(dtype=np.int64)
+    route_ids = df["ROUTE_ID"].drop_duplicates().to_numpy()
     X_seq = df[FEATURES].to_numpy(dtype=np.float32).reshape(-1, T, len(FEATURES))
 
     # Apply anomaly filtering based on route_ids for this percentage

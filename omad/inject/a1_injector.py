@@ -21,7 +21,7 @@ from __future__ import annotations
 import random
 from typing import List, Optional
 
-from inject_utils import (
+from omad.inject.inject_utils import (
     InjectionPlan,
     calculate_sed,
     calculate_sed_local,

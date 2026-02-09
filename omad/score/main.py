@@ -5,17 +5,27 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from infer import infer_anomaly_type_from_filename, infer_expected_T_from_path
-from llm_core import generate_json_validated, load_model, set_hf_cache
-from logging_utils import get_arg_value, iter_query_files, log, sanitize_user_query_text, save_output_json
+from omad.score.infer import infer_anomaly_type_from_filename, infer_expected_T_from_path
+from omad.score.llm_core import generate_json_validated, load_model, set_hf_cache
+from omad.score.logging_utils import get_arg_value, iter_query_files, log, sanitize_user_query_text, save_output_json
 
-CACHE_DIR = "/nas/home/oy6uns"
+CACHE_DIR = "./data/models"
 MODEL_ID = "Qwen/Qwen3-8B"
 DEFAULT_OUT_DIR = str(Path(__file__).resolve().parent / "outputs")
 DEFAULT_LOG_DIR = str(Path(__file__).resolve().parent / "logs")
 
-set_hf_cache(CACHE_DIR)
-tokenizer, model = load_model(MODEL_ID, CACHE_DIR)
+# Lazy model loading - only load when actually needed
+_tokenizer = None
+_model = None
+
+
+def _get_model():
+    """Load model on first use (lazy initialization)."""
+    global _tokenizer, _model
+    if _tokenizer is None:
+        set_hf_cache(CACHE_DIR)
+        _tokenizer, _model = load_model(MODEL_ID, CACHE_DIR)
+    return _tokenizer, _model
 
 
 def _parse_anomaly_type_flag(value: Optional[str]) -> Optional[str]:
@@ -49,6 +59,7 @@ def _batch_from_root(
     max_retries: int,
     log_fh,
 ) -> int:
+    tokenizer, model = _get_model()
     root = Path(batch_root)
     files = sorted(root.glob("**/user_query/*.txt"))
     log(f"[BATCH] batch_root={batch_root} (files={len(files)})", log_fh=log_fh)
@@ -107,6 +118,7 @@ def _batch_from_dir(
     max_retries: int,
     log_fh,
 ) -> int:
+    tokenizer, model = _get_model()
     files = iter_query_files(batch_dir)
     log(f"[BATCH] query_dir={batch_dir} (files={len(files)})", log_fh=log_fh)
     log(f"[BATCH] out_dir={out_dir}", log_fh=log_fh)
@@ -165,6 +177,7 @@ def _run_once(
     if anomaly_type is None:
         print("[ERROR] --once requires --anomaly-type A1|A2", flush=True)
         return 2
+    tokenizer, model = _get_model()
     user_query = sys.stdin.read().strip()
     if not user_query:
         return 0
@@ -193,6 +206,7 @@ def _run_interactive(
     if anomaly_type is None:
         print("[ERROR] interactive mode requires --anomaly-type A1|A2", flush=True)
         return 2
+    tokenizer, model = _get_model()
     print("Model loaded. Paste input; submit an empty line to run; type ':q' to quit.", flush=True)
     print(f"[CONFIG] out_dir={out_dir}", flush=True)
     while True:

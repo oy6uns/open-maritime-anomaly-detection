@@ -18,10 +18,10 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from a1_injector import inject_a1
-from a2_injector import inject_a2
-from a3_injector import inject_a3_virtual_rows, load_a3_plans
-from inject_utils import build_track_index, iter_routes_csv, load_plans
+from omad.inject.a1_injector import inject_a1
+from omad.inject.a2_injector import inject_a2
+from omad.inject.a3_injector import inject_a3_virtual_rows, load_a3_plans
+from omad.inject.inject_utils import build_track_index, iter_routes_csv, load_plans
 
 
 def _parse_args() -> argparse.Namespace:
@@ -249,7 +249,7 @@ def main() -> int:
     args = _parse_args()
 
     # Derive paths from slice if not provided
-    base_dir = f"./route_sliced_{args.slice}"
+    base_dir = f"./data/route_sliced_{args.slice}"
     input_csv = args.input_csv or f"{base_dir}/routes_sliced_{args.slice}_preprocessed.csv"
     track_csv = args.track_csv or f"{base_dir}/routes_sliced_{args.slice}.csv"
     injected_dir = args.injected_dir or f"{base_dir}/injected"

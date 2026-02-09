@@ -120,8 +120,7 @@ def create_default_config(output_path: str | Path):
     config_content = """# OMAD Configuration
 
 # ── Global ──────────────────────────────────────────────
-T: 12                         # Time slice length in hours (12/24/48/72)
-slices: [12, 24]              # Which T values to process (for batch operations)
+slices: [12, 24]              # Time slice lengths to process (12/24/48/72)
 seed: 0                       # Random seed
 verbose: false                # Detailed logging
 

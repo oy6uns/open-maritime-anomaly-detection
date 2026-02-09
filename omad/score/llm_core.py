@@ -189,7 +189,7 @@ def generate_json_validated(
     max_retries: int,
     log_fn=None,
 ) -> Tuple[str, Optional[Dict[str, Any]], str, int]:
-    from prompts import build_system_prompt
+    from omad.score.prompts import build_system_prompt
 
     system_prompt = build_system_prompt(anomaly_type=anomaly_type)
     base_messages: List[Dict[str, str]] = [

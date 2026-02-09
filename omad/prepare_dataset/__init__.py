@@ -49,7 +49,7 @@ def run_prepare_dataset_batch(
     percentages = [f"{r}pct" for r in ratios]
 
     base_path = Path(base_dir)
-    out_path = Path(out_dir) if out_dir else (base_path / "data")
+    out_path = Path(out_dir) if out_dir else (base_path / "data" / "dataset")
     out_path.mkdir(parents=True, exist_ok=True)
 
     total_combinations = len(percentages) * len(slices) * len(modes) * len(seeds)
@@ -72,7 +72,7 @@ def run_prepare_dataset_batch(
 
         for pct in percentages:
             for T in slices:
-                csv_path = base_path / f"route_sliced_{T}" / f"routes_sliced_{T}_injected.csv"
+                csv_path = base_path / "data" / f"route_sliced_{T}" / f"routes_sliced_{T}_injected.csv"
 
                 if not csv_path.exists():
                     console.print(f"[yellow]SKIP:[/yellow] {csv_path} not found")
@@ -81,7 +81,7 @@ def run_prepare_dataset_batch(
                     continue
 
                 for mode in modes:
-                    indices_path = base_path / f"route_sliced_{T}" / f"indices/indices_{T}_{mode}.csv"
+                    indices_path = base_path / "data" / f"route_sliced_{T}" / f"indices/indices_{T}_{mode}.csv"
 
                     if not indices_path.exists():
                         console.print(f"[yellow]SKIP:[/yellow] {indices_path} not found")

@@ -22,8 +22,8 @@ GENERAL SETTING
 - You must output exactly T scores.
 - Scores should be interpretable and consistent with the anomaly-type-specific constraints.
 - You MUST respect anomaly-type-specific structural constraints below.
-- A target anomaly count K ∈ {6,12,18} is ALWAYS provided externally and is FIXED.
-- K MUST NOT be inferred, predicted, or modified.
+- A target anomaly count K ∈ {T/4, T/2, 3T/4} is ALWAYS provided in the user input and is FIXED.
+- K MUST NOT be inferred, predicted, or modified. Use the exact K given in the input.
 
 ==================================================
 ANOMALY-TYPE-SPECIFIC CONSTRAINTS
@@ -105,8 +105,8 @@ GENERAL SETTING
 - You must output exactly T scores.
 - Scores should be interpretable and consistent with the anomaly-type-specific constraints.
 - You MUST respect anomaly-type-specific structural constraints below.
-- A target anomaly count K ∈ {6,12,18} is ALWAYS provided externally and is FIXED.
-- K MUST NOT be inferred, predicted, or modified.
+- A target anomaly count K ∈ {T/4, T/2, 3T/4} is ALWAYS provided in the user input and is FIXED.
+- K MUST NOT be inferred, predicted, or modified. Use the exact K given in the input.
 
 ==================================================
 ANOMALY-TYPE-SPECIFIC CONSTRAINTS

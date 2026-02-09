@@ -38,7 +38,7 @@ ALPHA_STEP = 5.0            # meters, step size for alpha search
 @dataclass
 class InjectionPlan:
     """Injection plan loaded from JSON."""
-    route_id: int
+    route_id: str
     anomaly_type: str  # "A1" or "A2"
     T: int
     K: int
@@ -56,7 +56,7 @@ class InjectionPlan:
 @dataclass
 class A3Plan:
     """A3 injection plan."""
-    route_id: int
+    route_id: str
     scores: List[float]
 
 
@@ -354,7 +354,7 @@ def get_cross_track_direction(
 # =========================
 # CSV Iteration
 # =========================
-def iter_routes_csv(csv_path: str) -> Iterator[Tuple[int, List[dict], List[str]]]:
+def iter_routes_csv(csv_path: str) -> Iterator[Tuple[str, List[dict], List[str]]]:
     """
     Iterate over routes in CSV file.
     Yields (route_id, rows, fieldnames) for each route.
@@ -367,7 +367,7 @@ def iter_routes_csv(csv_path: str) -> Iterator[Tuple[int, List[dict], List[str]]
         current_rows = []
 
         for row in reader:
-            route_id = int(row['ROUTE_ID'])
+            route_id = row['ROUTE_ID']
 
             if current_route_id is None:
                 current_route_id = route_id
@@ -386,11 +386,16 @@ def iter_routes_csv(csv_path: str) -> Iterator[Tuple[int, List[dict], List[str]]
 # =========================
 # Plan Loading
 # =========================
-def load_plans(injected_dir: str) -> Dict[Tuple[int, str], InjectionPlan]:
+def load_plans(injected_dir: str) -> Dict[Tuple[str, str], InjectionPlan]:
     """
     Load A1/A2 injection plans from JSON files.
     Returns dict mapping (route_id, anomaly_type) -> InjectionPlan.
+
+    Filename format: qwen_output_route_{ROUTE_ID}_{A1|A2}_{timestamp}.json
+    ROUTE_ID can contain underscores (e.g. "2018CargoApr1-0"), so we parse
+    by finding the anomaly type marker (A1/A2) from the right side.
     """
+    import re
     plans = {}
     patterns = [
         os.path.join(injected_dir, "qwen_output_route_*_A1_*.json"),
@@ -404,14 +409,16 @@ def load_plans(injected_dir: str) -> Dict[Tuple[int, str], InjectionPlan]:
                     data = json.load(f)
 
                 if 'K' not in data or 'scores' not in data:
-                    # Skip malformed or non A1/A2 outputs quietly
                     continue
 
                 # Extract route_id from filename
+                # Format: qwen_output_route_{ROUTE_ID}_{A1|A2}_{timestamp}.json
                 basename = os.path.basename(filepath)
-                parts = basename.replace("qwen_output_route_", "").split("_")
-                route_id = int(parts[0])
-                anomaly_type = data.get('anomaly_type', parts[1].split("_")[0])
+                m = re.match(r"qwen_output_route_(.+)_(A[12])_\d{8}-\d{6}-\d{6}\.json$", basename)
+                if not m:
+                    continue
+                route_id = m.group(1)
+                anomaly_type = data.get('anomaly_type', m.group(2))
 
                 plan = InjectionPlan(
                     route_id=route_id,
@@ -427,11 +434,12 @@ def load_plans(injected_dir: str) -> Dict[Tuple[int, str], InjectionPlan]:
     return plans
 
 
-def load_a3_plans(injected_dir: str, fallback_dir: Optional[str] = None) -> Dict[int, A3Plan]:
+def load_a3_plans(injected_dir: str, fallback_dir: Optional[str] = None) -> Dict[str, A3Plan]:
     """
     Load A3 injection plans from JSON files.
     Returns dict mapping route_id -> A3Plan.
     """
+    import re
     plans = {}
 
     def load_from_dir(directory: str):
@@ -443,9 +451,12 @@ def load_a3_plans(injected_dir: str, fallback_dir: Optional[str] = None) -> Dict
                 with open(filepath, 'r') as f:
                     data = json.load(f)
 
+                # Extract route_id: qwen_output_route_{ROUTE_ID}_A3_{timestamp}.json
                 basename = os.path.basename(filepath)
-                parts = basename.replace("qwen_output_route_", "").split("_")
-                route_id = int(parts[0])
+                m = re.match(r"qwen_output_route_(.+)_A3_\d{8}-\d{6}-\d{6}\.json$", basename)
+                if not m:
+                    continue
+                route_id = m.group(1)
 
                 plan = A3Plan(
                     route_id=route_id,
