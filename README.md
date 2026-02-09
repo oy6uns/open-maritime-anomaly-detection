@@ -77,7 +77,8 @@ omad pipeline --help
 
 For reproducibility, we release pre-generated `.npz` files of the OMTAD dataset,
 covering all three anomaly types (A1, A2, A3) at anomaly ratios of 1%, 3%, 5%,
-and 10%, with five independent random seeds per configuration. The dataset is available via Google Drive: [Google Drive link](https://drive.google.com/file/d/1dNZd4wEnkPU1akNCY-_Fi3cwcUfNx8E8/view?usp=sharing).
+and 10%, with five independent random seeds per configuration.  <br>
+The dataset is available via Google Drive: [Google Drive link](https://drive.google.com/file/d/1dNZd4wEnkPU1akNCY-_Fi3cwcUfNx8E8/view?usp=sharing).
 
 ## Data Format
 
