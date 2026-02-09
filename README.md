@@ -23,7 +23,7 @@ Maritime anomaly detection pipeline using LLM-based scoring and synthetic anomal
 
 ```bash
 # Clone repository
-git clone <repository-url>
+git clone https://github.com/oy6uns/open-maritime-anomaly-detection.git
 cd open-maritime-anomaly-detection
 
 # Create virtual environment (recommended)
