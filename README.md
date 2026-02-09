@@ -40,7 +40,7 @@ pip install -e .
 
 ```bash
 mkdir -p data
-# Copy your AIS data (e.g., OMTAD: https://github.com/EdithCowan/OMTAD/tree/main/West%20Grid) to data/
+# Copy your AIS data (e.g., OMTAD West Grid: https://github.com/EdithCowan/OMTAD/tree/main/West%20Grid) to data/
 cp -r /path/to/West\ Grid/* data/
 ```
 
