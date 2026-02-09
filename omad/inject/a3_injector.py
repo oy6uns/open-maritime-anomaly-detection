@@ -1,5 +1,5 @@
 """
-KRISO2026 - A3 Anomaly Injector
+OMAD - A3 Anomaly Injector
 ================================
 A3: Close-approach anomaly (virtual vessel generation).
 

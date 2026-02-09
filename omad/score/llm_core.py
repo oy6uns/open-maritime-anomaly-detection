@@ -58,7 +58,7 @@ def validate_score_payload(
 
     # Schema:
     # - A1/A2 require K (anomaly count) and its allowed values depend on T
-    #   (for KRISO slices: K ∈ {T/4, T/2, 3T/4} where T ∈ {12,24,48,72})
+    #   (for slices: K ∈ {T/4, T/2, 3T/4} where T ∈ {12,24,48,72})
     # - A3 does NOT require K
     # - If expected_anomaly_type is None (e.g., review mode), accept either schema
     if expected_anomaly_type in {"A1", "A2"}:

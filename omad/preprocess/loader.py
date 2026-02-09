@@ -11,11 +11,11 @@ import pandas as pd
 from pathlib import Path
 
 
-BASE_PATH = "/workspace/NAS/West Grid"
+BASE_PATH = "./data"
 
 def load_data(year_list):
     """
-    2018년 전체 월(cargo, passenger, tanker) CSV 데이터 로드
+    Load all monthly CSV data (cargo, passenger, tanker) for specified years
     """
     columns = ["CRAFT_ID", "LON", "LAT", "COURSE", "SPEED", "TIMESTAMP", "Track_ID"]
     months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -40,13 +40,13 @@ def load_data(year_list):
                     tmp["MONTH"] = m
                     dfs.append(tmp)
                 else:
-                    print(f"[WARN] 파일 없음: {file_path}")
+                    print(f"[WARN] File not found: {file_path}")
     if not dfs:
-        raise ValueError("2018년 데이터를 로드할 수 없습니다.")
+        raise ValueError("Cannot load 2018 data.")
     df = pd.concat(dfs, ignore_index=True)
     df.dropna(inplace=True)
     
-    # TIMESTAMP 변환
+    # TIMESTAMP conversion
     df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"], errors="coerce")
     df.dropna(subset=["TIMESTAMP"], inplace=True)
     df["TIMESTAMP"] = df["TIMESTAMP"].dt.round("1H")
@@ -59,7 +59,7 @@ def load_data(year_list):
     return df
 
 def interpolate_group(group):
-    """Track_ID별 1시간 간격 보간"""
+    """Hourly interpolation per Track_ID"""
     track_id = group["Track_ID"].iloc[0]
     craft_id = group["CRAFT_ID"].iloc[0]
     group = group.set_index("TIMESTAMP")
@@ -91,4 +91,4 @@ if __name__ == "__main__":
     out_path = Path("outputs") / "omtad.csv"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_path, index=False, encoding="utf-8-sig")
-    print(f"CSV 저장 완료: {out_path.resolve()}")
+    print(f"CSV saved: {out_path.resolve()}")

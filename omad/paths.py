@@ -29,7 +29,7 @@ def resolve_stage1_paths(
         "output_dir": overrides.get("output_dir") or base_dir,
         "raw_routes_csv": overrides.get("raw_routes_csv") or config.paths.raw_routes_csv(T),
         "preprocessed_csv": overrides.get("preprocessed_csv") or config.paths.preprocessed_csv(T),
-        "indices_dir": overrides.get("indices_dir") or config.paths.indices_dir(),
+        "indices_dir": overrides.get("indices_dir") or config.paths.indices_dir(T),
         "user_query_dir": overrides.get("user_query_dir") or config.paths.user_query_dir(T),
     }
 

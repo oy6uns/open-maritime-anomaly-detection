@@ -22,7 +22,7 @@ Maritime anomaly detection pipeline using LLM-based scoring and synthetic anomal
 ```bash
 # Clone repository
 git clone <repository-url>
-cd OpenMaritimeAnomalyDetection
+cd open-maritime-anomaly-detection
 
 # Create virtual environment (recommended)
 python -m venv venv
@@ -37,12 +37,9 @@ pip install -e .
 ### 1. Prepare Data
 
 ```bash
-# Create data directory
 mkdir -p data
-
-# Place your AIS CSV file in the data directory
-# Example: copy your AIS trajectory data to data/omtad.csv
-cp /path/to/your/ais_data.csv data/omtad.csv
+# Copy your AIS data (e.g., OMTAD: https://github.com/EdithCowan/OMTAD/tree/main/West%20Grid) to data/
+cp -r /path/to/West\ Grid/* data/
 ```
 
 ### 2. Initialize Configuration
@@ -51,7 +48,7 @@ cp /path/to/your/ais_data.csv data/omtad.csv
 # Create default config.yaml
 omad config --init
 
-# Edit config.yaml to set your data paths (usually just input_csv)
+# Edit config.yaml if needed (defaults work out of the box)
 nano config.yaml
 ```
 
@@ -62,14 +59,13 @@ nano config.yaml
 omad preprocess
 omad score
 omad inject
-omad prepare-dataset --batch
+omad prepare-dataset
 
 # Or run complete pipeline
 omad pipeline
 
 # Override config location if needed
 omad preprocess --config experiments/custom.yaml
-omad pipeline --config my_config.yaml
 ```
 
 ## Project Structure

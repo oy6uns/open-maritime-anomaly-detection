@@ -7,14 +7,13 @@ from pydantic import BaseModel, Field
 class PathConfig(BaseModel):
     """Path configuration for OMAD."""
 
-    nas_base: Path = Path("/workspace/NAS/KRISO2026")
-    local_base: Path = Path("/workspace/Local")
-    shared_folder: Path = Path("/workspace/NAS/KRISO2026/shared_folder")
-    west_grid_base: Path = Path("/workspace/NAS/West Grid")
+    # Use current working directory as base
+    project_root: Path = Path(".")
+    data_dir: Path = Path("./data")
 
     def route_sliced_dir(self, T: int) -> Path:
         """Get route_sliced_{T} directory path."""
-        return self.nas_base / f"route_sliced_{T}"
+        return self.project_root / f"route_sliced_{T}"
 
     def preprocessed_csv(self, T: int) -> Path:
         """Get preprocessed CSV path for given T."""
@@ -32,9 +31,9 @@ class PathConfig(BaseModel):
         """Get user_query directory path for given T."""
         return self.route_sliced_dir(T) / "user_query"
 
-    def indices_dir(self) -> Path:
-        """Get indices directory path."""
-        return self.shared_folder / "indices"
+    def indices_dir(self, T: int) -> Path:
+        """Get indices directory path for given T."""
+        return self.route_sliced_dir(T) / "indices"
 
     def injected_json_dir(self, T: int) -> Path:
         """Get injected JSON directory path for given T."""
@@ -45,7 +44,7 @@ class LLMConfig(BaseModel):
     """LLM configuration."""
 
     model_id: str = "Qwen/Qwen3-8B"
-    cache_dir: Path = Path("/nas/home/oy6uns")
+    cache_dir: Path | None = None  # Will use HuggingFace default
     max_new_tokens: int = 256
     max_retries: int = -1
 
@@ -65,7 +64,7 @@ class DatasetConfig(BaseModel):
     valid_ratio: float = 0.15
     test_ratio: float = 0.15
     default_seeds: list[int] = [2, 12, 22, 32, 42]
-    default_percentages: list[str] = ["10pct", "5pct", "3pct", "1pct"]
+    default_ratios: list[int] = [10, 5, 3, 1]
 
 
 class OmadConfig(BaseModel):

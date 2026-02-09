@@ -4,10 +4,10 @@ Review (and optionally fix) saved outputs.
 Usage examples:
 
   # Validate all outputs in out_dir; print summary
-  python qwen_review.py --batch-root /workspace/NAS/KRISO2026 --out-dir /workspace/Local/outputs
+  python qwen_review.py --batch-root ./route_sliced_12 --out-dir ./outputs
 
   # Fix invalid ones by re-running model and saving new JSONs with prefix qwen_review
-  python qwen_review.py --batch-root /workspace/NAS/KRISO2026 --out-dir /workspace/Local/outputs --fix
+  python qwen_review.py --batch-root ./route_sliced_12 --out-dir ./outputs --fix
 """
 
 from __future__ import annotations
@@ -68,15 +68,15 @@ def main() -> int:
     max_retries = int(max_retries_s) if (max_retries_s and max_retries_s.isdigit()) else 2
 
     if out_dir is None:
-        print("[오류] --out-dir 는 필수입니다.", flush=True)
+        print("[ERROR] --out-dir is required.", flush=True)
         return 2
     if fix and batch_root is None:
-        print("[오류] --fix 를 쓰려면 --batch-root 가 필요합니다.", flush=True)
+        print("[ERROR] --batch-root is required to use --fix.", flush=True)
         return 2
 
     outp = Path(out_dir)
     files = sorted(outp.glob(f"{prefix}_*.json"))
-    print(f"[리뷰] out_dir={out_dir} prefix={prefix} files={len(files)} fix={fix}", flush=True)
+    print(f"[REVIEW] out_dir={out_dir} prefix={prefix} files={len(files)} fix={fix}", flush=True)
     tokenizer = None
     model = None
     if fix:
@@ -141,7 +141,7 @@ def main() -> int:
         fixed_cnt += 1
 
     print(
-        f"[요약] ok={ok_cnt} bad={bad_cnt} fixed={fixed_cnt} missing_query={missing_query_cnt}",
+        f"[SUMMARY] ok={ok_cnt} bad={bad_cnt} fixed={fixed_cnt} missing_query={missing_query_cnt}",
         flush=True,
     )
     return 0

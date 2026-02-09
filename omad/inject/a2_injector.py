@@ -1,9 +1,9 @@
 """
-KRISO2026 - A2 Anomaly Injector
+OMAD - A2 Anomaly Injector
 ================================
 A2: Speed and heading anomaly based on acceleration/angular velocity.
 
-"평소 가속도의 theta_v * (1 + s_i) 배만큼 갑자기 빨라지거나 느려짐"
+"Sudden speed up/down by theta_v * (1 + s_i) times usual acceleration"
 
 Algorithm:
 1. Calculate local acceleration baseline: a_local = mean(|a_i|)

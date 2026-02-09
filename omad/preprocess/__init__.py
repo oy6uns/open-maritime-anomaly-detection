@@ -23,9 +23,9 @@ from omad.utils.logging import (
 def run_preprocess(
     T: int = 12,
     input_csv: str | None = None,
-    trim: int = 0,
-    min_track_len: int = 30,
-    ratios: str = "10,5,3,1",
+    trim: int = 12,
+    min_track_len: int = 36,
+    ratios: list[int] | None = None,
     skip_stratification: bool = False,
     skip_prompts: bool = False,
     seed: int = 0,
@@ -39,7 +39,7 @@ def run_preprocess(
         input_csv: Input CSV path (long-format AIS data)
         trim: Points to trim from track ends and start
         min_track_len: Minimum track length filter
-        ratios: Comma-separated anomaly ratios (e.g., "10,5,3,1")
+        ratios: Anomaly ratios list (e.g., [10, 5, 3, 1])
         skip_stratification: Skip indices generation (use existing)
         skip_prompts: Skip user_query generation (use existing)
         seed: Random seed
@@ -53,8 +53,8 @@ def run_preprocess(
     # Window is always equal to T
     window = T
 
-    # Parse ratios
-    percentages = [int(r.strip()) for r in ratios.split(",")]
+    # Default ratios
+    ratio_list = ratios if ratios is not None else [10, 5, 3, 1]
 
     # Display configuration
     log_config({
@@ -64,7 +64,7 @@ def run_preprocess(
         "Output Dir": paths["output_dir"],
         "Trim": trim,
         "Min Track Len": min_track_len,
-        "Anomaly Ratios": percentages,
+        "Anomaly Ratios": ratio_list,
         "Seed": seed,
         "Skip Stratification": skip_stratification,
         "Skip Prompts": skip_prompts,
@@ -85,8 +85,8 @@ def run_preprocess(
         if input_csv is None:
             # Try to find omtad.csv or similar
             possible_paths = [
-                "/workspace/Local/Loader/outputs/omtad.csv",
-                "/workspace/NAS/KRISO2026/omtad.csv",
+                "./data/omtad.csv",
+                "./omtad.csv",
                 paths["output_dir"] / "omtad.csv",
             ]
             input_csv = None
@@ -159,11 +159,11 @@ def run_preprocess(
                     output_path=indices_path,
                     seed=seed,
                     n_bins=5,
-                    percentages=percentages,
+                    percentages=ratio_list,
                 )
 
                 console.print(f"    Total routes: {len(indices_df):,}")
-                for pct in percentages:
+                for pct in ratio_list:
                     count = indices_df[f"use_{pct}pct"].sum()
                     console.print(f"    {pct}pct: {count:,} routes")
 

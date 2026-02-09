@@ -1,5 +1,5 @@
 """
-KRISO2026 - Injection Utilities
+OMAD - Injection Utilities
 ================================
 Common utilities for A1/A2/A3 anomaly injection.
 """
@@ -211,7 +211,7 @@ def calculate_sed(
 ) -> float:
     """
     Calculate SED: perpendicular distance from next point to line (prev -> curr).
-    A(prev), C(curr)를 기준선으로, B(next)의 수직거리를 계산.
+    Calculate perpendicular distance of B(next) from baseline A(prev), C(curr).
     Returns distance in meters.
     """
     return cross_track_distance(lon_prev, lat_prev, lon_curr, lat_curr, lon_next, lat_next)
@@ -231,7 +231,7 @@ def calculate_sed_local(rows: List[dict]) -> float:
         p_prev = (float(rows[k - 1]['LON']), float(rows[k - 1]['LAT']))
         p_curr = (float(rows[k]['LON']), float(rows[k]['LAT']))
         p_next = (float(rows[k + 1]['LON']), float(rows[k + 1]['LAT']))
-        # 중간점 p_curr에서 선분(p_prev → p_next)까지의 수직거리
+        # Perpendicular distance from midpoint p_curr to line segment (p_prev → p_next)
         sed = calculate_sed(p_prev[0], p_prev[1], p_next[0], p_next[1], p_curr[0], p_curr[1])
         sed_values.append(sed)
 

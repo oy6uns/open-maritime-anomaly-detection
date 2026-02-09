@@ -1,9 +1,9 @@
 """
-KRISO2026 - A1 Anomaly Injector
+OMAD - A1 Anomaly Injector
 ================================
 A1: Position anomaly based on SED (cross-track deviation).
 
-"평소 흔들림 대비, 몇 배 튀면 이상으로 볼 거냐"
+"How many times the usual deviation qualifies as anomaly"
 
 Algorithm:
 1. LLM selects top-K positions: I_K = TopK({s_t}, K)
@@ -13,7 +13,7 @@ Algorithm:
    - Randomly choose side (-1 or +1)
    - If chosen side increases SED: alpha = target_sed - original_sed
      else: alpha = target_sed + original_sed
-     (기준선: i-1 → i+1, 측정점: i)
+     (baseline: i-1 → i+1, measured point: i)
 4. Inject: p_i^fake = p_i + alpha_i * u_perp
 """
 from __future__ import annotations
@@ -108,12 +108,12 @@ def inject_a1(
 
     # 3. For each top-K index, inject anomaly
     for i in top_k_indices:
-        # 이동 대상 인덱스 (기본: i)
+        # Target index for movement (default: i)
         target_idx = i
 
-        # 경계 처리: 기준선은 (i-1 → i+1), 측정점은 i
+        # Boundary handling: baseline is (i-1 → i+1), measured point is i
         if i == 0:
-            # 맨 앞 경계: rows[0] 기준 track prev(이전 1개) 사용
+            # Front boundary: use track prev (1 previous) for rows[0]
             if W < 2:
                 continue
             row_prev = _get_track_prev(original_rows[0], 1)
@@ -122,14 +122,14 @@ def inject_a1(
             row_curr = original_rows[0]
             row_next = original_rows[1]
         elif i == W - 1:
-            # 뒤 경계: rows[W-1] 기준 track next(다음 1개) 사용
+            # Back boundary: use track next (1 next) for rows[W-1]
             if W < 2:
                 continue
             row_prev = original_rows[W - 2]
             row_curr = original_rows[W - 1]
             row_next = _get_track_next(original_rows[W - 1], 1)
             if row_next is None:
-                # fallback: track next가 없더라도 마지막 포인트를 기준선 끝으로 사용
+                # fallback: use last point as baseline end even without track next
                 row_next = row_curr
         else:
             row_prev = original_rows[i - 1]
@@ -147,10 +147,10 @@ def inject_a1(
         # Calculate target SED threshold
         target_sed = theta_g * (1 + s_i) * sed_local_clipped
 
-        # 1. 원래 SED 계산 (기준선: i-1 → i+1, 측정점: i)
+        # 1. 원래 SED 계산 (baseline: i-1 → i+1, measured point: i)
         original_sed = calculate_sed(lon_prev, lat_prev, lon_next, lat_next, lon_curr, lat_curr)
 
-        # 2. SED가 증가하는 방향(좌/우) 찾기
+        # 2. Find direction (left/right) that increases SED
         perp_bearing_left = get_cross_track_direction(lon_prev, lat_prev, lon_next, lat_next, side=1)
         perp_bearing_right = get_cross_track_direction(lon_prev, lat_prev, lon_next, lat_next, side=-1)
 
@@ -176,7 +176,7 @@ def inject_a1(
         alpha = max(min_alpha, alpha_raw)
         alpha = min(alpha, max_alpha) # clipping max value
 
-        # 4. 적용
+        # 4. Apply
         # Move from original position along normal direction
         new_lon, new_lat = destination_point(lon_curr, lat_curr, perp_bearing, alpha)
         rows[target_idx]['LON'] = str(new_lon)

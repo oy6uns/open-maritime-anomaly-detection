@@ -1,5 +1,5 @@
 """
-KRISO2026 - Anomaly Injection Main
+OMAD - Anomaly Injection Main
 ===================================
 Apply A1/A2/A3 anomaly injection to route CSV using LLM JSON outputs.
 
@@ -26,7 +26,7 @@ from inject_utils import build_track_index, iter_routes_csv, load_plans
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="Inject A1/A2/A3 anomalies into KRISO route CSV using LLM JSON outputs."
+        description="Inject A1/A2/A3 anomalies into route CSV using LLM JSON outputs."
     )
     p.add_argument(
         "--slice",
@@ -110,7 +110,7 @@ def apply_injection_to_csv(
     a3_fallback = os.path.join(base_dir, "A3_before")
     a3_plans = load_a3_plans(injected_dir, fallback_dir=a3_fallback)
     if not a3_plans:
-        a3_plans = load_a3_plans("/workspace/NAS/KRISO2026/A3_before")
+        a3_plans = load_a3_plans("./data/A3_before")
     print(f"Loaded {len(a3_plans)} A3 plans")
 
     stats = {
@@ -249,7 +249,7 @@ def main() -> int:
     args = _parse_args()
 
     # Derive paths from slice if not provided
-    base_dir = f"/workspace/NAS/KRISO2026/route_sliced_{args.slice}"
+    base_dir = f"./route_sliced_{args.slice}"
     input_csv = args.input_csv or f"{base_dir}/routes_sliced_{args.slice}_preprocessed.csv"
     track_csv = args.track_csv or f"{base_dir}/routes_sliced_{args.slice}.csv"
     injected_dir = args.injected_dir or f"{base_dir}/injected"

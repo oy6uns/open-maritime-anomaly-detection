@@ -7,7 +7,7 @@ setup(
     name="omad",
     version="0.1.0",
     description="Ocean Maritime Anomaly Detection - Pipeline CLI Tool",
-    author="KRISO2026 Team",
+    author="OMAD Contributors",
     packages=find_packages(),
     install_requires=requirements,
     entry_points={

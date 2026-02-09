@@ -16,9 +16,9 @@ app = typer.Typer(
 def preprocess_command(
     T: Annotated[int, typer.Option(help="Time slice length (12/24/48/72)")] = 12,
     input_csv: Annotated[str | None, typer.Option(help="Input AIS CSV path")] = None,
-    trim: Annotated[int, typer.Option(help="Points to trim from track ends and start")] = 0,
-    min_track_len: Annotated[int, typer.Option(help="Minimum track length")] = 30,
-    ratios: Annotated[str, typer.Option("--r", help="Anomaly ratios (e.g., '10,5,3,1')")] = "10,5,3,1",
+    trim: Annotated[int, typer.Option(help="Points to trim from track start/end")] = 12,
+    min_track_len: Annotated[int, typer.Option(help="Minimum track length")] = 36,
+    ratios: Annotated[str | None, typer.Option("--r", help="Anomaly ratios (e.g., '10,5,3,1')")] = None,
     skip_stratification: Annotated[bool, typer.Option(help="Skip indices generation")] = False,
     skip_prompts: Annotated[bool, typer.Option(help="Skip prompt generation")] = False,
     seed: Annotated[int, typer.Option(help="Random seed")] = 0,
@@ -51,23 +51,31 @@ def preprocess_command(
             prep_cfg = cfg['preprocess']
             if input_csv is None and 'input_csv' in prep_cfg:
                 input_csv = prep_cfg['input_csv']
-            if trim == 0 and 'trim' in prep_cfg:
+            if trim == 12 and 'trim' in prep_cfg:
                 trim = prep_cfg['trim']
-            if min_track_len == 30 and 'min_track_len' in prep_cfg:
+            if min_track_len == 36 and 'min_track_len' in prep_cfg:
                 min_track_len = prep_cfg['min_track_len']
-            if ratios == "10,5,3,1" and 'ratios' in prep_cfg:
+            if ratios is None and 'ratios' in prep_cfg:
                 ratios = prep_cfg['ratios']
             if not skip_stratification and 'skip_stratification' in prep_cfg:
                 skip_stratification = prep_cfg['skip_stratification']
             if not skip_prompts and 'skip_prompts' in prep_cfg:
                 skip_prompts = prep_cfg['skip_prompts']
 
+    # Convert ratios: CLI string → list[int], config already list[int]
+    ratios_list = None
+    if ratios is not None:
+        if isinstance(ratios, str):
+            ratios_list = [int(r.strip()) for r in ratios.split(",")]
+        elif isinstance(ratios, list):
+            ratios_list = ratios
+
     run_preprocess(
         T=T,
         input_csv=input_csv,
         trim=trim,
         min_track_len=min_track_len,
-        ratios=ratios,
+        ratios=ratios_list,
         skip_stratification=skip_stratification,
         skip_prompts=skip_prompts,
         seed=seed,
@@ -210,24 +218,11 @@ def inject_command(
 # Stage 4: Dataset Preparation
 @app.command(name="prepare-dataset")
 def prepare_dataset_command(
-    batch: Annotated[bool, typer.Option("--batch", help="Generate all combinations")] = False,
-    base_dir: Annotated[str, typer.Option(help="Base directory")] = "/workspace/NAS/KRISO2026/shared_folder",
-    out_dir: Annotated[str | None, typer.Option(help="Output directory")] = None,
-    csv: Annotated[str | None, typer.Option(help="Input CSV (single mode)")] = None,
-    mode: Annotated[str | None, typer.Option(help="Anomaly type (a1/a2/a3)")] = None,
-    T: Annotated[int, typer.Option(help="Time slice length")] = 12,
-    percentage: Annotated[str, typer.Option(help="Anomaly percentage")] = "10pct",
-    seed: Annotated[int, typer.Option(help="Random seed")] = 0,
-    train: Annotated[float, typer.Option(help="Train ratio")] = 0.7,
-    valid: Annotated[float, typer.Option(help="Valid ratio")] = 0.15,
-    test: Annotated[float, typer.Option(help="Test ratio")] = 0.15,
-    output_dir: Annotated[str | None, typer.Option(help="Output dir (single mode)")] = None,
-    prefix: Annotated[str | None, typer.Option(help="File prefix (single mode)")] = None,
     config: Annotated[str | None, typer.Option("--config", "-c", help="Config file path")] = None,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Detailed logging")] = False,
 ):
     """Stage 4: Prepare final NPZ datasets for model training."""
-    from omad.prepare_dataset import run_prepare_dataset_batch, run_prepare_dataset_single
+    from omad.prepare_dataset import run_prepare_dataset_batch
     from omad.config_loader import load_yaml_config, get_default_config_path
 
     # Auto-detect config if not specified
@@ -236,57 +231,35 @@ def prepare_dataset_command(
         if default_path.exists():
             config = str(default_path)
 
+    # Defaults
+    kwargs = {
+        "base_dir": ".",
+        "ratios": [10, 5, 3, 1],
+        "slices": [12, 24],
+        "modes": ["a1", "a2", "a3"],
+        "seeds": [2, 12, 32, 42, 52],
+        "train": 0.7,
+        "valid": 0.15,
+        "test": 0.15,
+    }
+
     # Load and merge config if available
     if config:
         cfg = load_yaml_config(config)
-        # Merge global settings
-        if 'T' in cfg and T == 12:
-            T = cfg['T']
-        if 'seed' in cfg and seed == 0:
-            seed = cfg['seed']
         if 'verbose' in cfg and not verbose:
             verbose = cfg['verbose']
 
-        # Merge prepare-dataset-specific settings
+        # Read slices from global config
+        if 'slices' in cfg:
+            kwargs['slices'] = cfg['slices']
+
         if 'prepare-dataset' in cfg:
             prep_cfg = cfg['prepare-dataset']
-            if base_dir == "/workspace/NAS/KRISO2026/shared_folder" and 'base_dir' in prep_cfg:
-                base_dir = prep_cfg['base_dir']
-            if out_dir is None and 'out_dir' in prep_cfg:
-                out_dir = prep_cfg['out_dir']
-            if percentage == "10pct" and 'percentage' in prep_cfg:
-                percentage = prep_cfg['percentage']
-            if train == 0.7 and 'train' in prep_cfg:
-                train = prep_cfg['train']
-            if valid == 0.15 and 'valid' in prep_cfg:
-                valid = prep_cfg['valid']
-            if test == 0.15 and 'test' in prep_cfg:
-                test = prep_cfg['test']
+            for key in kwargs:
+                if key in prep_cfg:
+                    kwargs[key] = prep_cfg[key]
 
-    if batch:
-        run_prepare_dataset_batch(
-            base_dir=base_dir,
-            out_dir=out_dir,
-            verbose=verbose
-        )
-    else:
-        if not csv or not mode:
-            from omad.utils.logging import log_error
-            log_error("--csv and --mode are required for single mode")
-            raise typer.Exit(1)
-        run_prepare_dataset_single(
-            csv=csv,
-            mode=mode,
-            T=T,
-            percentage=percentage,
-            seed=seed,
-            output_dir=output_dir or ".",
-            prefix=prefix,
-            train=train,
-            valid=valid,
-            test=test,
-            verbose=verbose
-        )
+    run_prepare_dataset_batch(**kwargs, verbose=verbose)
 
 
 # Pipeline command
@@ -294,7 +267,7 @@ def prepare_dataset_command(
 def pipeline(
     T: Annotated[int, typer.Option(help="Time slice length")] = 12,
     seed: Annotated[int, typer.Option(help="Random seed")] = 0,
-    percentage: Annotated[str, typer.Option(help="Anomaly percentage")] = "10pct",
+    ratio: Annotated[int, typer.Option(help="Anomaly ratio (10/5/3/1)")] = 10,
     skip_stage1: Annotated[bool, typer.Option(help="Skip preprocessing (use existing)")] = True,
     skip_stage2: Annotated[bool, typer.Option(help="Skip LLM scoring (use existing)")] = False,
     theta_g: Annotated[float, typer.Option(help="A1 multiplier")] = 3.0,
@@ -334,8 +307,8 @@ def pipeline(
                 skip_stage1 = pipe_cfg['skip_stage1']
             if not skip_stage2 and 'skip_stage2' in pipe_cfg:
                 skip_stage2 = pipe_cfg['skip_stage2']
-            if percentage == "10pct" and 'percentage' in pipe_cfg:
-                percentage = pipe_cfg['percentage']
+            if ratio == 10 and 'ratio' in pipe_cfg:
+                ratio = pipe_cfg['ratio']
             if theta_g == 3.0 and 'theta_g' in pipe_cfg:
                 theta_g = pipe_cfg['theta_g']
             if theta_v == 2.0 and 'theta_v' in pipe_cfg:
@@ -365,7 +338,7 @@ def pipeline(
 
         # Stage 4: Dataset Preparation (for all modes)
         log_info("[bold cyan]>>> Running Stage 4: Dataset Preparation[/bold cyan]")
-        csv_path = f"/workspace/NAS/KRISO2026/route_sliced_{T}/routes_sliced_{T}_injected.csv"
+        csv_path = f"./route_sliced_{T}/routes_sliced_{T}_injected.csv"
 
         for mode in ["a1", "a2", "a3"]:
             console.print(f"\n[bold]Processing mode: {mode.upper()}[/bold]")
@@ -373,9 +346,9 @@ def pipeline(
                 csv=csv_path,
                 mode=mode,
                 T=T,
-                percentage=percentage,
+                percentage=f"{ratio}pct",
                 seed=seed,
-                output_dir=f"/workspace/NAS/KRISO2026/shared_folder/data/{percentage}/slice_{T}_{mode}/seed_{seed}",
+                output_dir=f"./data/{ratio}pct/slice_{T}_{mode}/seed_{seed}",
                 train=0.7,
                 valid=0.15,
                 test=0.15,
