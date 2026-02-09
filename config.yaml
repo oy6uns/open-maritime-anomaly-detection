@@ -25,4 +25,4 @@ prepare-dataset:
   seeds: [2, 12, 32, 42, 52]  # Random seed for Dataset Split
   train: 0.7                  # Train split
   valid: 0.15                 # Validation split
-  test: 0.15                  # Test split (train + valid + test = 1.0)
+  test: 0.15                  # Test split

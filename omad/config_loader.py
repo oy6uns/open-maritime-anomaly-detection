@@ -129,8 +129,8 @@ verbose: false                # Detailed logging
 preprocess:
   input_csv: ./data/omtad.csv # Input AIS CSV file path
   trim: 12                    # Points to trim from track start/end
-  min_track_len: 36           # Minimum track length (in points)
-  ratios: [10, 5, 3, 1]       # Stratification ratios (e.g., 10%, 5%, 3%, 1%)
+  min_track_len: 36           # Minimum track length (in points) for use
+  ratios: [10, 5, 3, 1]       # ratios for determining Injection and Stratification (e.g., 10%, 5%, 3%, 1%)
 
 # ── Inject ──────────────────────────────────────────────
 inject:
@@ -144,7 +144,7 @@ prepare-dataset:
   seeds: [2, 12, 32, 42, 52]  # Random seed for Dataset Split
   train: 0.7                  # Train split
   valid: 0.15                 # Validation split
-  test: 0.15                  # Test split (train + valid + test = 1.0)
+  test: 0.15                  # Test split
 """
 
     output_path = Path(output_path)

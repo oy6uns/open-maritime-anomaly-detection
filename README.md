@@ -2,6 +2,8 @@
 
 Maritime anomaly detection pipeline using LLM-based scoring and synthetic anomaly injection.
 
+![Overall Framework](overall_framework.png)
+
 ## Features
 
 - **Preprocess**: Route slicing, stratification, and prompt generation
@@ -66,6 +68,11 @@ omad pipeline
 
 # Override config location if needed
 omad preprocess --config experiments/custom.yaml
+
+# View available options for any command
+omad --help
+omad preprocess --help
+omad pipeline --help
 ```
 
 ## Project Structure
