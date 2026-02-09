@@ -75,6 +75,31 @@ omad preprocess --help
 omad pipeline --help
 ```
 
+For reproducibility, we release pre-generated `.npz` files of the OMTAD dataset,
+covering all three anomaly types (A1, A2, A3) at anomaly ratios of 1%, 3%, 5%,
+and 10%, with five independent random seeds per configuration. The dataset is available via Google Drive: [Google Drive link]([https://drive.google.com/xxxx](https://drive.google.com/file/d/1dNZd4wEnkPU1akNCY-_Fi3cwcUfNx8E8/view?usp=sharing)).
+
+## Data Format
+
+### Input (AIS Data)
+
+CSV with columns:
+- `TIMESTAMP`: Datetime
+- `CRAFT_ID`: Vessel identifier
+- `TRACK_ID`: Track identifier
+- `LON`, `LAT`: Coordinates
+- `SPEED`: Speed over ground (knots)
+- `COURSE`: Course over ground (degrees)
+
+### Output (NPZ Dataset)
+
+Each NPZ file contains:
+- `X`: Flattened features (n_samples, n_features)
+- `X_seq`: Sequential features (n_samples, T, n_features)
+- `y`: Binary anomaly labels (n_samples, T)
+- `route_ids`: Route identifiers (n_samples,)
+
+
 ## Project Structure
 
 ```
@@ -113,27 +138,6 @@ open-maritime-anomaly-detection/
         ├── logging.py
         └── validation.py
 ```
-
-## Data Format
-
-### Input (AIS Data)
-
-CSV with columns:
-- `TIMESTAMP`: Datetime
-- `CRAFT_ID`: Vessel identifier
-- `TRACK_ID`: Track identifier
-- `LON`, `LAT`: Coordinates
-- `SPEED`: Speed over ground (knots)
-- `COURSE`: Course over ground (degrees)
-
-### Output (NPZ Dataset)
-
-Each NPZ file contains:
-- `X`: Flattened features (n_samples, n_features)
-- `X_seq`: Sequential features (n_samples, T, n_features)
-- `y`: Binary anomaly labels (n_samples, T)
-- `route_ids`: Route identifiers (n_samples,)
-
 <!--
 ## Citation
 
