@@ -8,6 +8,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import os
 import numpy as np
 import pandas as pd
+
+FREQ_1H = "1h" if pd.__version__ >= "2" else "1H"
 from pathlib import Path
 
 
@@ -62,7 +64,7 @@ def load_data(year_list):
     # TIMESTAMP conversion
     df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"], errors="coerce")
     df.dropna(subset=["TIMESTAMP"], inplace=True)
-    df["TIMESTAMP"] = df["TIMESTAMP"].dt.round("1H")
+    df["TIMESTAMP"] = df["TIMESTAMP"].dt.round(FREQ_1H)
     
     # COURSE -> sin, cos
     df["COURSE_SIN"] = np.sin(np.deg2rad(df["COURSE"]))
@@ -77,7 +79,7 @@ def interpolate_group(group):
     craft_id = group["CRAFT_ID"].iloc[0]
     group = group.set_index("TIMESTAMP")
     group = group[~group.index.duplicated(keep="first")]
-    group = group.resample("1H").interpolate()
+    group = group.resample(FREQ_1H).interpolate()
     group["Track_ID"] = track_id
     group["CRAFT_ID"] = group["CRAFT_ID"].fillna(craft_id).astype(float).astype(int)
     if "ANOMALY" not in group.columns:
